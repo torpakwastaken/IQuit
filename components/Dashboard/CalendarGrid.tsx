@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Habit } from '@/store/habitStore';
 
 interface CalendarGridProps {
@@ -7,79 +7,58 @@ interface CalendarGridProps {
 }
 
 export function CalendarGrid({ habit }: CalendarGridProps) {
-  const getDays = () => {
-    const days = [];
+  // Create a grid showing the last 40 days
+  const createGrid = () => {
+    const squares = [];
     const today = new Date();
     
-    // Show last 35 days (5 weeks)
-    for (let i = 34; i >= 0; i--) {
+    // Create 40 squares representing the last 40 days
+    for (let i = 0; i < 40; i++) {
       const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      days.push(date);
+      date.setDate(date.getDate() - (39 - i)); // Start from 39 days ago
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Check if this date has a successful check-in
+      const checkIn = habit.checkIns.find(c => c.date === dateStr);
+      const isSuccess = checkIn?.status === 'success';
+      const isToday = dateStr === today.toISOString().split('T')[0];
+      
+      // Determine color based on check-in status
+      let backgroundColor;
+      if (isSuccess) {
+        backgroundColor = '#22c55e'; // Bright green for checked-in days
+      } else if (checkIn?.status === 'failed') {
+        backgroundColor = '#ef4444'; // Red for failed days
+      } else {
+        backgroundColor = '#374151'; // Dark gray for no check-in
+      }
+      
+      squares.push({
+        key: i,
+        backgroundColor,
+        isToday,
+        date: dateStr
+      });
     }
     
-    return days;
+    return squares;
   };
 
-  const getDayStatus = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    const checkIn = habit.checkIns.find(c => c.date === dateStr);
-    const habitStart = new Date(habit.startDate);
-    
-    if (date < habitStart) return 'before-start';
-    if (date > new Date()) return 'future';
-    if (!checkIn) return 'missed';
-    
-    return checkIn.status;
-  };
-
-  const getSquareStyle = (status: string, isToday: boolean) => {
-    const baseStyle = [styles.daySquare];
-    
-    if (isToday) {
-      baseStyle.push(styles.todaySquare);
-    }
-    
-    switch (status) {
-      case 'success':
-        baseStyle.push(styles.successSquare);
-        break;
-      case 'failed':
-        baseStyle.push(styles.failedSquare);
-        break;
-      case 'missed':
-        baseStyle.push(styles.missedSquare);
-        break;
-      case 'future':
-        baseStyle.push(styles.futureSquare);
-        break;
-      case 'before-start':
-        baseStyle.push(styles.beforeStartSquare);
-        break;
-    }
-    
-    return baseStyle;
-  };
-
-  const days = getDays();
-  const today = new Date().toISOString().split('T')[0];
+  const squares = createGrid();
 
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {days.map((date, index) => {
-          const dateStr = date.toISOString().split('T')[0];
-          const status = getDayStatus(date);
-          const isToday = dateStr === today;
-          
-          return (
-            <TouchableOpacity
-              key={index}
-              style={getSquareStyle(status, isToday)}
-              activeOpacity={0.7}
-            />
-          );
-        })}
+        {squares.map((square) => (
+          <View
+            key={square.key}
+            style={[
+              styles.square,
+              { backgroundColor: square.backgroundColor },
+              square.isToday && styles.todayBorder
+            ]}
+          />
+        ))}
       </View>
     </View>
   );
@@ -87,38 +66,22 @@ export function CalendarGrid({ habit }: CalendarGridProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    width: 192, // 8 squares * (20px + 4px margin) = 192px
   },
-  daySquare: {
-    width: '12.5%',
-    aspectRatio: 1,
-    margin: 1,
+  square: {
+    width: 20,
+    height: 20,
+    margin: 2,
     borderRadius: 3,
-    backgroundColor: '#374151',
   },
-  todaySquare: {
+  todayBorder: {
     borderWidth: 2,
-    borderColor: '#3b82f6',
-  },
-  successSquare: {
-    backgroundColor: '#10b981',
-  },
-  failedSquare: {
-    backgroundColor: '#ef4444',
-  },
-  missedSquare: {
-    backgroundColor: '#6b7280',
-  },
-  futureSquare: {
-    backgroundColor: '#374151',
-    opacity: 0.3,
-  },
-  beforeStartSquare: {
-    backgroundColor: 'transparent',
+    borderColor: '#60a5fa',
   },
 });
