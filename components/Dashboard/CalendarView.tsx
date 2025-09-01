@@ -301,11 +301,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   emptyDay: {
-    width: '14.28%',
+    width: '13.5%', // Match the day width for consistent 7-day layout
     aspectRatio: 1,
   },
   day: {
-    width: '14.28%',
+    width: '13.5%', // Slightly less than 14.28% to ensure proper 7-day layout with margins
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',

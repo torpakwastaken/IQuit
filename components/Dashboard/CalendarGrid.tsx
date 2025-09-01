@@ -7,8 +7,8 @@ interface CalendarGridProps {
 }
 
 export function CalendarGrid({ habit }: CalendarGridProps) {
-  // Create a grid showing the current month as a proper calendar
-  const createMonthGrid = () => {
+  // Create a compact monthly calendar grid showing the current month
+  const createMonthlyGrid = () => {
     const squares = [];
     const today = new Date();
     const year = today.getFullYear();
@@ -22,16 +22,17 @@ export function CalendarGrid({ habit }: CalendarGridProps) {
     
     const todayStr = today.toISOString().split('T')[0];
     
-    // Add empty cells for days before the first day of the month
+    // Add empty cells for days before the first day of the month (starting from top-left)
     for (let i = 0; i < startingDayOfWeek; i++) {
       squares.push({
         key: `empty-${i}`,
         backgroundColor: 'transparent',
-        isEmpty: true
+        isEmpty: true,
+        isToday: false
       });
     }
     
-    // Add days of the current month
+    // Add days of the current month (completed days will appear in proper calendar positions)
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       const dateStr = date.toISOString().split('T')[0];
@@ -63,7 +64,7 @@ export function CalendarGrid({ habit }: CalendarGridProps) {
     return squares;
   };
 
-  const squares = createMonthGrid();
+  const squares = createMonthlyGrid();
 
   return (
     <View style={styles.container}>
@@ -92,13 +93,15 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: 192, // 7 squares * (24px + 4px margin) = 196px (adjusted for weekly layout)
+    width: 168, // 7 squares per row * (22px + 2px margin) = 168px for proper calendar layout
+    justifyContent: 'flex-start', // Align to start to show natural month shape
   },
   square: {
-    width: 24,
-    height: 24,
-    margin: 2,
+    width: 22,
+    height: 22,
+    margin: 1,
     borderRadius: 3,
+    flex: 0,
   },
   emptySquare: {
     backgroundColor: 'transparent',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TrendingUp, Target, Calendar, Award } from 'lucide-react-native';
+import { TrendingUp, Target, Calendar, Award, Trophy } from 'lucide-react-native';
 import { useHabitStore } from '@/store/habitStore';
 import { useTranslation } from '@/utils/i18n';
 
@@ -72,28 +72,72 @@ export default function Statistics() {
           </View>
         )}
 
-        {habits.map((habit) => (
-          <View key={habit.id} style={styles.habitStats}>
-            <View style={styles.habitHeader}>
-              <Text style={styles.habitName}>{habit.name}</Text>
-              <Text style={styles.habitCategory}>{t.habits[habit.category as keyof typeof t.habits]}</Text>
+        {habits.map((habit) => {
+          const daysSinceStart = getDaysSinceStart(habit.id);
+          const milestones = [
+            { days: 1, title: t.milestones.day1, achieved: daysSinceStart >= 1 },
+            { days: 3, title: t.milestones.day3, achieved: daysSinceStart >= 3 },
+            { days: 7, title: t.milestones.week1, achieved: daysSinceStart >= 7 },
+            { days: 14, title: t.milestones.week2, achieved: daysSinceStart >= 14 },
+            { days: 30, title: t.milestones.month1, achieved: daysSinceStart >= 30 },
+            { days: 90, title: t.milestones.month3, achieved: daysSinceStart >= 90 },
+            { days: 180, title: t.milestones.month6, achieved: daysSinceStart >= 180 },
+            { days: 365, title: t.milestones.year1, achieved: daysSinceStart >= 365 },
+          ];
+
+          return (
+            <View key={habit.id} style={styles.habitStats}>
+              <View style={styles.habitHeader}>
+                <Text style={styles.habitName}>{habit.name}</Text>
+                <Text style={styles.habitCategory}>{t.habits[habit.category as keyof typeof t.habits]}</Text>
+              </View>
+              <View style={styles.habitMetrics}>
+                <View style={styles.metric}>
+                  <Text style={styles.metricValue}>{getCurrentStreak(habit.id)}</Text>
+                  <Text style={styles.metricLabel}>Current Streak</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricValue}>{daysSinceStart}</Text>
+                  <Text style={styles.metricLabel}>Days Since Start</Text>
+                </View>
+                <View style={styles.metric}>
+                  <Text style={styles.metricValue}>{getSuccessRate(habit.id)}%</Text>
+                  <Text style={styles.metricLabel}>Success Rate</Text>
+                </View>
+              </View>
+              
+              <View style={styles.milestonesSection}>
+                <Text style={styles.milestonesTitle}>Milestones</Text>
+                <View style={styles.milestones}>
+                  {milestones.map((milestone, index) => (
+                    <View 
+                      key={index} 
+                      style={[styles.milestone, milestone.achieved && styles.achievedMilestone]}
+                    >
+                      <View style={[styles.milestoneIcon, milestone.achieved && styles.achievedIcon]}>
+                        <Trophy 
+                          size={16} 
+                          color={milestone.achieved ? '#fbbf24' : '#64748b'} 
+                        />
+                      </View>
+                      <View style={styles.milestoneContent}>
+                        <Text style={[styles.milestoneTitle, milestone.achieved && styles.achievedTitle]}>
+                          {milestone.title}
+                        </Text>
+                        <Text style={styles.milestoneDays}>{milestone.days} {t.dashboard.days}</Text>
+                      </View>
+                      {milestone.achieved && (
+                        <View style={styles.achievedBadge}>
+                          <Text style={styles.achievedText}>✓</Text>
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              </View>
             </View>
-            <View style={styles.habitMetrics}>
-              <View style={styles.metric}>
-                <Text style={styles.metricValue}>{getCurrentStreak(habit.id)}</Text>
-                <Text style={styles.metricLabel}>Current Streak</Text>
-              </View>
-              <View style={styles.metric}>
-                <Text style={styles.metricValue}>{getDaysSinceStart(habit.id)}</Text>
-                <Text style={styles.metricLabel}>Days Since Start</Text>
-              </View>
-              <View style={styles.metric}>
-                <Text style={styles.metricValue}>{getSuccessRate(habit.id)}%</Text>
-                <Text style={styles.metricLabel}>Success Rate</Text>
-              </View>
-            </View>
-          </View>
-        ))}
+          );
+        })}
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -210,6 +254,71 @@ const styles = StyleSheet.create({
     color: '#64748b',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  milestonesSection: {
+    marginTop: 16,
+  },
+  milestonesTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#f1f5f9',
+    marginBottom: 12,
+  },
+  milestones: {
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  milestone: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+  },
+  milestoneIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#37415120',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  achievedIcon: {
+    backgroundColor: '#fbbf2420',
+  },
+  milestoneContent: {
+    flex: 1,
+  },
+  milestoneTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#64748b',
+  },
+  achievedTitle: {
+    color: '#f1f5f9',
+  },
+  milestoneDays: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#64748b',
+    marginTop: 2,
+  },
+  achievedBadge: {
+    backgroundColor: '#10b981',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  achievedText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Bold',
+    color: '#ffffff',
   },
   bottomSpacer: {
     height: 40,

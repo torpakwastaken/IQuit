@@ -11,11 +11,10 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit }: HabitCardProps) {
-  const { language, getCurrentStreak, getSuccessRate, addCheckIn } = useHabitStore();
+  const { language, getCurrentStreak, addCheckIn } = useHabitStore();
   const t = useTranslation(language);
   
   const currentStreak = getCurrentStreak(habit.id);
-  const successRate = getSuccessRate(habit.id);
   const HabitIcon = getHabitIcon(habit.icon);
 
   const handleCheckIn = () => {
@@ -56,16 +55,11 @@ export function HabitCard({ habit }: HabitCardProps) {
 
       <CalendarGrid habit={habit} />
 
-      <View style={styles.stats}>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>{t.dashboard.streak}</Text>
-          <Text style={styles.statValue}>{currentStreak} {t.dashboard.days}</Text>
+      {habit.motivation && (
+        <View style={styles.motivationSection}>
+          <Text style={styles.motivationText}>&ldquo;{habit.motivation}&rdquo;</Text>
         </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>{t.dashboard.successRate}</Text>
-          <Text style={styles.statValue}>{successRate}%</Text>
-        </View>
-      </View>
+      )}
 
       <TouchableOpacity 
         style={[styles.checkInButton, isCheckedInToday && styles.checkedInButton]} 
@@ -119,25 +113,21 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: '#64748b',
   },
-  stats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  motivationSection: {
     marginTop: 16,
     marginBottom: 16,
+    backgroundColor: '#0f172a',
+    borderRadius: 8,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3b82f6',
   },
-  statItem: {
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#64748b',
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#f1f5f9',
+  motivationText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#e2e8f0',
+    fontStyle: 'italic',
+    lineHeight: 20,
   },
   checkInButton: {
     backgroundColor: '#3b82f6',
