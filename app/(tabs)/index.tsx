@@ -37,7 +37,7 @@ export default function Dashboard() {
       </View>
 
       <View style={styles.motivationalQuote}>
-        <Text style={styles.quoteText}>"{t.dashboard.motivationalQuote}"</Text>
+        <Text style={styles.quoteText}>&ldquo;{t.dashboard.motivationalQuote}&rdquo;</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

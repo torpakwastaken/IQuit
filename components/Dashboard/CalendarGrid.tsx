@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Habit } from '@/store/habitStore';
 
 interface CalendarGridProps {
@@ -7,79 +7,79 @@ interface CalendarGridProps {
 }
 
 export function CalendarGrid({ habit }: CalendarGridProps) {
-  const getDays = () => {
-    const days = [];
+  // Create a compact monthly calendar grid showing the current month
+  const createMonthlyGrid = () => {
+    const squares = [];
     const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
     
-    // Show last 35 days (5 weeks)
-    for (let i = 34; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      days.push(date);
+    // Get first day of the month and number of days
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const daysInMonth = lastDayOfMonth.getDate();
+    const startingDayOfWeek = firstDayOfMonth.getDay();
+    
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Add empty cells for days before the first day of the month (starting from top-left)
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      squares.push({
+        key: `empty-${i}`,
+        backgroundColor: 'transparent',
+        isEmpty: true,
+        isToday: false
+      });
     }
     
-    return days;
-  };
-
-  const getDayStatus = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    const checkIn = habit.checkIns.find(c => c.date === dateStr);
-    const habitStart = new Date(habit.startDate);
-    
-    if (date < habitStart) return 'before-start';
-    if (date > new Date()) return 'future';
-    if (!checkIn) return 'missed';
-    
-    return checkIn.status;
-  };
-
-  const getSquareStyle = (status: string, isToday: boolean) => {
-    const baseStyle = [styles.daySquare];
-    
-    if (isToday) {
-      baseStyle.push(styles.todaySquare);
+    // Add days of the current month (completed days will appear in proper calendar positions)
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Check if this date has a check-in
+      const checkIn = habit.checkIns.find(c => c.date === dateStr);
+      const isSuccess = checkIn?.status === 'success';
+      const isFailed = checkIn?.status === 'failed';
+      const isToday = dateStr === todayStr;
+      
+      // Determine color based on check-in status
+      let backgroundColor;
+      if (isSuccess) {
+        backgroundColor = '#fbbf24'; // Bright yellow for successful days
+      } else if (isFailed) {
+        backgroundColor = '#ef4444'; // Red for failed days
+      } else {
+        backgroundColor = '#374151'; // Dark gray for no check-in
+      }
+      
+      squares.push({
+        key: day,
+        backgroundColor,
+        isToday,
+        isEmpty: false
+      });
     }
     
-    switch (status) {
-      case 'success':
-        baseStyle.push(styles.successSquare);
-        break;
-      case 'failed':
-        baseStyle.push(styles.failedSquare);
-        break;
-      case 'missed':
-        baseStyle.push(styles.missedSquare);
-        break;
-      case 'future':
-        baseStyle.push(styles.futureSquare);
-        break;
-      case 'before-start':
-        baseStyle.push(styles.beforeStartSquare);
-        break;
-    }
-    
-    return baseStyle;
+    return squares;
   };
 
-  const days = getDays();
-  const today = new Date().toISOString().split('T')[0];
+  const squares = createMonthlyGrid();
 
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {days.map((date, index) => {
-          const dateStr = date.toISOString().split('T')[0];
-          const status = getDayStatus(date);
-          const isToday = dateStr === today;
-          
-          return (
-            <TouchableOpacity
-              key={index}
-              style={getSquareStyle(status, isToday)}
-              activeOpacity={0.7}
-            />
-          );
-        })}
+        {squares.map((square) => (
+          <View
+            key={square.key}
+            style={[
+              styles.square,
+              { backgroundColor: square.backgroundColor },
+              square.isToday && styles.todayBorder,
+              square.isEmpty && styles.emptySquare
+            ]}
+          />
+        ))}
       </View>
     </View>
   );
@@ -87,38 +87,27 @@ export function CalendarGrid({ habit }: CalendarGridProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    width: 168, // 7 squares per row * (22px + 2px margin) = 168px for proper calendar layout
+    justifyContent: 'flex-start', // Align to start to show natural month shape
   },
-  daySquare: {
-    width: '12.5%',
-    aspectRatio: 1,
+  square: {
+    width: 22,
+    height: 22,
     margin: 1,
     borderRadius: 3,
-    backgroundColor: '#374151',
+    flex: 0,
   },
-  todaySquare: {
-    borderWidth: 2,
-    borderColor: '#3b82f6',
-  },
-  successSquare: {
-    backgroundColor: '#10b981',
-  },
-  failedSquare: {
-    backgroundColor: '#ef4444',
-  },
-  missedSquare: {
-    backgroundColor: '#6b7280',
-  },
-  futureSquare: {
-    backgroundColor: '#374151',
-    opacity: 0.3,
-  },
-  beforeStartSquare: {
+  emptySquare: {
     backgroundColor: 'transparent',
+  },
+  todayBorder: {
+    borderWidth: 2,
+    borderColor: '#60a5fa',
   },
 });
