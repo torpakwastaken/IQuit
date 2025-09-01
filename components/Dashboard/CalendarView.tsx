@@ -42,7 +42,8 @@ export function CalendarView({ habit }: CalendarViewProps) {
   };
 
   const handleDatePress = (day: number) => {
-    const dateStr = new Date(year, month, day).toISOString().split('T')[0];
+    // Create date string without timezone issues
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     setSelectedDate(dateStr);
     const existingNote = getDayNote(habit.id, dateStr);
     setNoteText(existingNote || '');
@@ -143,7 +144,9 @@ export function CalendarView({ habit }: CalendarViewProps) {
 
   const formatSelectedDate = () => {
     if (!selectedDate) return '';
-    const date = new Date(selectedDate);
+    // Parse the date string correctly to avoid timezone issues
+    const [yearStr, monthStr, dayStr] = selectedDate.split('-');
+    const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, parseInt(dayStr));
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
