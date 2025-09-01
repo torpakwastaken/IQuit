@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, useState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
   Globe, 
@@ -12,11 +12,13 @@ import {
 } from 'lucide-react-native';
 import { useHabitStore } from '@/store/habitStore';
 import { useTranslation, getAvailableLanguages } from '@/utils/i18n';
+import { PaywallModal } from '@/components/Premium/PaywallModal';
 
 export default function Settings() {
   const { language, theme, isPremium, setLanguage, setTheme, setPremium } = useHabitStore();
   const t = useTranslation(language);
   const availableLanguages = getAvailableLanguages();
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   const SettingsItem = ({ 
     icon: Icon, 
@@ -68,14 +70,7 @@ export default function Settings() {
     if (isPremium) {
       Alert.alert('Premium Active', 'You already have Premium access!');
     } else {
-      Alert.alert(
-        'Upgrade to Premium',
-        'Get unlimited habits, advanced analytics, and more for $4.99/month',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => setPremium(true) }
-        ]
-      );
+      setPaywallVisible(true);
     }
   };
 
@@ -158,6 +153,15 @@ export default function Settings() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+        onPurchaseSuccess={() => {
+          // Handle successful purchase
+          console.log('Premium purchase successful');
+        }}
+      />
     </SafeAreaView>
   );
 }

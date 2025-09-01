@@ -14,6 +14,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useHabitStore } from '@/store/habitStore';
 import { useTranslation } from '@/utils/i18n';
 import { habitCategories, getHabitIcon } from '@/utils/habitIcons';
+import { PaywallModal } from '@/components/Premium/PaywallModal';
 
 export default function AddHabit() {
   const { addHabit, language, habits, isPremium } = useHabitStore();
@@ -23,16 +24,13 @@ export default function AddHabit() {
   const [habitName, setHabitName] = useState<string>('');
   const [motivation, setMotivation] = useState<string>('');
   const [goalDays, setGoalDays] = useState<string>('30');
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   const canAddHabit = isPremium || habits.length < 2;
 
   const handleCreateHabit = () => {
     if (!canAddHabit) {
-      Alert.alert(
-        'Upgrade Required', 
-        t.dashboard.upgradeForMore,
-        [{ text: 'OK' }]
-      );
+      setPaywallVisible(true);
       return;
     }
 
@@ -140,7 +138,10 @@ export default function AddHabit() {
         {!canAddHabit && (
           <View style={styles.limitNotice}>
             <Text style={styles.limitText}>{t.dashboard.habitsLimit}</Text>
-            <TouchableOpacity style={styles.upgradeButton}>
+            <TouchableOpacity 
+              style={styles.upgradeButton}
+              onPress={() => setPaywallVisible(true)}
+            >
               <Text style={styles.upgradeText}>Upgrade to Premium</Text>
             </TouchableOpacity>
           </View>
@@ -156,6 +157,15 @@ export default function AddHabit() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      <PaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+        onPurchaseSuccess={() => {
+          // Handle successful purchase
+          console.log('Premium purchase successful');
+        }}
+      />
     </SafeAreaView>
   );
 }
