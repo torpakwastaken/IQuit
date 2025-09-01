@@ -7,44 +7,63 @@ interface CalendarGridProps {
 }
 
 export function CalendarGrid({ habit }: CalendarGridProps) {
-  // Create a grid showing the last 40 days
-  const createGrid = () => {
+  // Create a grid showing the current month as a proper calendar
+  const createMonthGrid = () => {
     const squares = [];
     const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
     
-    // Create 40 squares representing the last 40 days
-    for (let i = 0; i < 40; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - (39 - i)); // Start from 39 days ago
+    // Get first day of the month and number of days
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const daysInMonth = lastDayOfMonth.getDate();
+    const startingDayOfWeek = firstDayOfMonth.getDay();
+    
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      squares.push({
+        key: `empty-${i}`,
+        backgroundColor: 'transparent',
+        isEmpty: true
+      });
+    }
+    
+    // Add days of the current month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
       const dateStr = date.toISOString().split('T')[0];
       
-      // Check if this date has a successful check-in
+      // Check if this date has a check-in
       const checkIn = habit.checkIns.find(c => c.date === dateStr);
       const isSuccess = checkIn?.status === 'success';
-      const isToday = dateStr === today.toISOString().split('T')[0];
+      const isFailed = checkIn?.status === 'failed';
+      const isToday = dateStr === todayStr;
       
       // Determine color based on check-in status
       let backgroundColor;
       if (isSuccess) {
-        backgroundColor = '#22c55e'; // Bright green for checked-in days
-      } else if (checkIn?.status === 'failed') {
+        backgroundColor = '#fbbf24'; // Bright yellow for successful days
+      } else if (isFailed) {
         backgroundColor = '#ef4444'; // Red for failed days
       } else {
         backgroundColor = '#374151'; // Dark gray for no check-in
       }
       
       squares.push({
-        key: i,
+        key: day,
         backgroundColor,
         isToday,
-        date: dateStr
+        isEmpty: false
       });
     }
     
     return squares;
   };
 
-  const squares = createGrid();
+  const squares = createMonthGrid();
 
   return (
     <View style={styles.container}>
@@ -55,7 +74,8 @@ export function CalendarGrid({ habit }: CalendarGridProps) {
             style={[
               styles.square,
               { backgroundColor: square.backgroundColor },
-              square.isToday && styles.todayBorder
+              square.isToday && styles.todayBorder,
+              square.isEmpty && styles.emptySquare
             ]}
           />
         ))}
@@ -72,13 +92,16 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: 192, // 8 squares * (20px + 4px margin) = 192px
+    width: 192, // 7 squares * (24px + 4px margin) = 196px (adjusted for weekly layout)
   },
   square: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     margin: 2,
     borderRadius: 3,
+  },
+  emptySquare: {
+    backgroundColor: 'transparent',
   },
   todayBorder: {
     borderWidth: 2,

@@ -8,6 +8,12 @@ export interface CheckIn {
   note?: string;
 }
 
+export interface DayNote {
+  date: string; // YYYY-MM-DD format
+  note: string;
+  createdAt: string;
+}
+
 export interface Habit {
   id: string;
   name: string;
@@ -15,6 +21,7 @@ export interface Habit {
   category: string;
   startDate: string;
   checkIns: CheckIn[];
+  dayNotes: DayNote[];
   motivation: string;
   goalDays: number;
   reminderTime?: string;
@@ -31,6 +38,10 @@ interface HabitStore {
   deleteHabit: (id: string) => void;
   addCheckIn: (habitId: string, checkIn: CheckIn) => void;
   updateCheckIn: (habitId: string, date: string, status: 'success' | 'failed', note?: string) => void;
+  addDayNote: (habitId: string, date: string, note: string) => void;
+  updateDayNote: (habitId: string, date: string, note: string) => void;
+  deleteDayNote: (habitId: string, date: string) => void;
+  getDayNote: (habitId: string, date: string) => string | undefined;
   setLanguage: (language: string) => void;
   setTheme: (theme: 'dark' | 'light' | 'auto') => void;
   setPremium: (isPremium: boolean) => void;
@@ -54,6 +65,7 @@ export const useHabitStore = create<HabitStore>()(
           id: Date.now().toString(),
           createdAt: new Date().toISOString(),
           checkIns: [],
+          dayNotes: [],
         };
         
         set((state) => ({ 
@@ -103,6 +115,74 @@ export const useHabitStore = create<HabitStore>()(
             return habit;
           })
         }));
+      },
+
+      addDayNote: (habitId, date, note) => {
+        set((state) => ({
+          habits: state.habits.map(habit => {
+            if (habit.id === habitId) {
+              const dayNotes = habit.dayNotes || [];
+              const existingNoteIndex = dayNotes.findIndex(n => n.date === date);
+              const newDayNotes = [...dayNotes];
+              
+              if (existingNoteIndex >= 0) {
+                newDayNotes[existingNoteIndex] = {
+                  date,
+                  note,
+                  createdAt: new Date().toISOString()
+                };
+              } else {
+                newDayNotes.push({
+                  date,
+                  note,
+                  createdAt: new Date().toISOString()
+                });
+              }
+              
+              return { ...habit, dayNotes: newDayNotes };
+            }
+            return habit;
+          })
+        }));
+      },
+
+      updateDayNote: (habitId, date, note) => {
+        set((state) => ({
+          habits: state.habits.map(habit => {
+            if (habit.id === habitId) {
+              const dayNotes = habit.dayNotes || [];
+              const noteIndex = dayNotes.findIndex(n => n.date === date);
+              if (noteIndex >= 0) {
+                const newDayNotes = [...dayNotes];
+                newDayNotes[noteIndex] = { ...newDayNotes[noteIndex], note };
+                return { ...habit, dayNotes: newDayNotes };
+              }
+            }
+            return habit;
+          })
+        }));
+      },
+
+      deleteDayNote: (habitId, date) => {
+        set((state) => ({
+          habits: state.habits.map(habit => {
+            if (habit.id === habitId) {
+              const dayNotes = habit.dayNotes || [];
+              return {
+                ...habit,
+                dayNotes: dayNotes.filter(n => n.date !== date)
+              };
+            }
+            return habit;
+          })
+        }));
+      },
+
+      getDayNote: (habitId, date) => {
+        const habit = get().habits.find(h => h.id === habitId);
+        if (!habit || !habit.dayNotes) return undefined;
+        const dayNote = habit.dayNotes.find(n => n.date === date);
+        return dayNote?.note;
       },
 
       setLanguage: (language) => set({ language }),

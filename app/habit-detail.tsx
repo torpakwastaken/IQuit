@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Calendar, Trophy, Target } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Trophy, Target, Trash2 } from 'lucide-react-native';
 import { useHabitStore } from '@/store/habitStore';
 import { useTranslation } from '@/utils/i18n';
-import { CalendarGrid } from '@/components/Dashboard/CalendarGrid';
+import { CalendarView } from '@/components/Dashboard/CalendarView';
 import { getHabitIcon } from '@/utils/habitIcons';
 
 export default function HabitDetail() {
@@ -15,8 +15,8 @@ export default function HabitDetail() {
     language, 
     getCurrentStreak, 
     getLongestStreak, 
-    getSuccessRate, 
-    getDaysSinceStart 
+    getDaysSinceStart,
+    deleteHabit 
   } = useHabitStore();
   const t = useTranslation(language);
 
@@ -33,8 +33,28 @@ export default function HabitDetail() {
   const HabitIcon = getHabitIcon(habit.icon);
   const currentStreak = getCurrentStreak(habit.id);
   const longestStreak = getLongestStreak(habit.id);
-  const successRate = getSuccessRate(habit.id);
   const daysSinceStart = getDaysSinceStart(habit.id);
+
+  const handleDeleteHabit = () => {
+    Alert.alert(
+      'Delete Habit',
+      `Are you sure you want to delete "${habit.name}"? This action cannot be undone and will remove all your progress.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteHabit(habit.id);
+            router.back();
+          },
+        },
+      ]
+    );
+  };
 
   const milestones = [
     { days: 1, title: t.milestones.day1, achieved: daysSinceStart >= 1 },
@@ -57,7 +77,9 @@ export default function HabitDetail() {
           <HabitIcon size={32} color="#3b82f6" />
           <Text style={styles.habitName}>{habit.name}</Text>
         </View>
-        <View style={styles.placeholder} />
+        <TouchableOpacity onPress={handleDeleteHabit} style={styles.deleteButton}>
+          <Trash2 size={20} color="#ef4444" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -83,9 +105,7 @@ export default function HabitDetail() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Progress Calendar</Text>
-          <View style={styles.calendarContainer}>
-            <CalendarGrid habit={habit} />
-          </View>
+          <CalendarView habit={habit} />
         </View>
 
         <View style={styles.section}>
@@ -122,7 +142,7 @@ export default function HabitDetail() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your Motivation</Text>
             <View style={styles.motivationCard}>
-              <Text style={styles.motivationText}>"{habit.motivation}"</Text>
+              <Text style={styles.motivationText}>&ldquo;{habit.motivation}&rdquo;</Text>
             </View>
           </View>
         )}
@@ -158,8 +178,12 @@ const styles = StyleSheet.create({
     color: '#f1f5f9',
     marginLeft: 12,
   },
-  placeholder: {
-    width: 40,
+  deleteButton: {
+    padding: 8,
+    backgroundColor: '#7f1d1d20',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ef444440',
   },
   content: {
     flex: 1,
@@ -200,13 +224,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#f1f5f9',
     marginBottom: 12,
-  },
-  calendarContainer: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
   },
   milestones: {
     backgroundColor: '#1e293b',
